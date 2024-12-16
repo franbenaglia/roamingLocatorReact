@@ -1,0 +1,7 @@
+{
+  "name": "roamingLocatorReact",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react-vite"
+}
