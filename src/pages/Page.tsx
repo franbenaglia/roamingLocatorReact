@@ -2,10 +2,25 @@ import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, Io
 import { useParams } from 'react-router';
 import ExploreContainer from '../components/ExploreContainer';
 import './Page.css';
+import { useContext, useEffect } from 'react';
+import { useCookies } from 'react-cookie';
+import { AppContext, AppContextI } from '../context/AppContext';
 
 const Page: React.FC = () => {
 
   const { name } = useParams<{ name: string; }>();
+
+  const { setUser } = useContext<AppContextI>(AppContext);
+
+  const [cookies] = useCookies(['token', 'username']);
+
+  useEffect(() => {
+
+    if (cookies.username) {
+      setUser(cookies.username);
+    }
+
+  }, []);
 
   return (
     <IonPage>

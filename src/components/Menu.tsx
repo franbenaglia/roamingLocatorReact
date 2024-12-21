@@ -29,40 +29,30 @@ const appPages: AppPage[] = [
     mdIcon: mailSharp
   },
   {
-    title: 'Outbox',
-    url: '/folder/Outbox',
-    iosIcon: paperPlaneOutline,
-    mdIcon: paperPlaneSharp
+    title: 'Map',
+    url: '/Map',
+    iosIcon: mailOutline,
+    mdIcon: mailSharp
   },
   {
-    title: 'Favorites',
-    url: '/folder/Favorites',
-    iosIcon: heartOutline,
-    mdIcon: heartSharp
+    title: 'Coordinate List',
+    url: '/CoordinateList',
+    iosIcon: mailOutline,
+    mdIcon: mailSharp
   },
   {
-    title: 'Archived',
-    url: '/folder/Archived',
-    iosIcon: archiveOutline,
-    mdIcon: archiveSharp
+    title: 'Logout',
+    url: '/Logout',
+    iosIcon: mailOutline,
+    mdIcon: mailSharp
   },
-  {
-    title: 'Trash',
-    url: '/folder/Trash',
-    iosIcon: trashOutline,
-    mdIcon: trashSharp
-  },
-  {
-    title: 'Spam',
-    url: '/folder/Spam',
-    iosIcon: warningOutline,
-    mdIcon: warningSharp
-  }
 ];
 
-const labels = ['Family', 'Friends', 'Notes', 'Work', 'Travel', 'Reminders'];
+interface ContainerProps {
+  user: string
+}
 
-const Menu: React.FC = () => {
+const Menu: React.FC<ContainerProps> = ({ user }) => {
   const location = useLocation();
 
   return (
@@ -70,7 +60,7 @@ const Menu: React.FC = () => {
       <IonContent>
         <IonList id="inbox-list">
           <IonListHeader>Inbox</IonListHeader>
-          <IonNote>hi@ionicframework.com</IonNote>
+          <IonNote>{user}</IonNote>
           {appPages.map((appPage, index) => {
             return (
               <IonMenuToggle key={index} autoHide={false}>
@@ -81,16 +71,6 @@ const Menu: React.FC = () => {
               </IonMenuToggle>
             );
           })}
-        </IonList>
-
-        <IonList id="labels-list">
-          <IonListHeader>Labels</IonListHeader>
-          {labels.map((label, index) => (
-            <IonItem lines="none" key={index}>
-              <IonIcon aria-hidden="true" slot="start" icon={bookmarkOutline} />
-              <IonLabel>{label}</IonLabel>
-            </IonItem>
-          ))}
         </IonList>
       </IonContent>
     </IonMenu>
