@@ -4,8 +4,8 @@ import { Preferences } from '@capacitor/preferences';
 export const logout = async () => {
     await removeGoogleJwtToken();
     removeGoogleJwtTokenCookie();
-    removeJwtToken();
-    location.href = "/";
+    await removeJwtToken();
+    location.href = "/Login";
 }
 
 export const removeGoogleJwtTokenCookie = () => {

@@ -58,15 +58,21 @@ const App: React.FC = () => {
     setRenderMenu(islog);
   }
 
-  useEffect(() => {
+  const init = async () => {
+
     if (cookies.token) {
-      setGoogleJwtToken(cookies.token)
+      await setGoogleJwtToken(cookies.token)
     }
 
     if (cookies.username) {
       setUser(cookies.username)
     }
+
     logged();
+  }
+
+  useEffect(() => {
+    init();
   }, []);
 
   return (
@@ -74,7 +80,7 @@ const App: React.FC = () => {
       <AppProvider>
         <IonReactRouter>
           <IonSplitPane contentId="main">
-            {renderMenu ? <Menu user={user} /> : <Login />}
+            {renderMenu ? <Menu user={user} /> : ''}
             <IonRouterOutlet id="main">
               <Route path="/Login" exact={true}>
                 <LoginPage />
@@ -83,7 +89,7 @@ const App: React.FC = () => {
                 <LogoutPage />
               </Route>
               <Route path="/Map" exact={true}>
-                <MapPage />
+                <MapPage user={user} />
               </Route>
               <Route path="/CoordinateList" exact={true}>
                 <CoordinateListPage />

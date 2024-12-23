@@ -5,21 +5,26 @@ import { Capacitor } from '@capacitor/core';
 import { AppContext } from '../context/AppContext';
 import { getCoordsMockEvent, getGap, getRandomCoords } from '../helpers/EventCoordHelper';
 import { Coordinate } from '../model/Coordinate';
-import { addCoordinates, mapCenter, coordinates } from '../helpers/StatsHelper';
+import { addCoordinates, mapCenter } from '../helpers/StatsHelper';
 import { getCoordinateEvent, sendCoordinate, socketInit, getIdClients } from '../socket/Configuration';
-import { MapContainer, Marker, Popup, TileLayer, useMap, useMapEvent, useMapEvents } from 'react-leaflet'
+import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
 import 'leaflet/dist/leaflet.css';
 import { Icon } from 'leaflet';
 import { IonFab, IonFabButton, IonIcon, IonToggle } from '@ionic/react';
 import { trashOutline } from 'ionicons/icons';
+import { Subscription } from 'rxjs';
 
-const MapComponent: React.FC = () => {
+interface ContainerProps {
+    user: string
+}
+
+const MapComponent: React.FC<ContainerProps> = ({ user }) => {
 
     const availableColors = new Map([['red', 0], ['black', 0], ['blue', 0],])
 
     const [iconColorCount, setIconColorCount] = useState<Map<string, number>>(availableColors);
 
-    const [clientColor, setClientColor] = useState<Map<string, string>>();
+    const [clientColor, setClientColor] = useState<Map<string, string>>(new Map<string, string>);
 
     const [enableCenter, setEnableCenter] = useState(true);
 
@@ -27,13 +32,30 @@ const MapComponent: React.FC = () => {
 
     const [save, setSave] = useState(false);
 
-    const { user, room } = useContext(AppContext);
+    const { room } = useContext(AppContext);
 
     const [coords, setCoords] = useState([] as Coordinate[]);
+
+    let uns1: Subscription;
+    let uns2: Subscription;
+    let uns3: Subscription;
+    let uns4: Subscription;
+    let uns5: Subscription;
 
     useEffect(() => {
         position(); //subscripciones duplicadas
         socketInit(room);
+
+        return () => {
+
+            uns1.unsubscribe();
+            uns2.unsubscribe();
+            uns3.unsubscribe();
+            uns4.unsubscribe();
+            uns5.unsubscribe();
+
+        };
+
     }, []);
 
     const getIconUrl = (user: string): string => {
@@ -43,17 +65,20 @@ const MapComponent: React.FC = () => {
 
     const theIcon = (username: string) => new Icon({
         iconUrl: getIconUrl(username),
+        iconRetinaUrl: getIconUrl(username),
+        popupAnchor: [-0, -0],
+        iconSize: [32, 45],
     })
 
 
     const position = () => {
         assignColorToLocalClient();
         if (!Capacitor.isNativePlatform()) {
-            getCurrentStaticPosition().subscribe(position => {
+            uns1 = getCurrentStaticPosition().subscribe(position => {
                 mockPosition(position.coords.latitude, position.coords.longitude, 0.005);
             });
         } else {
-            getRoamingPosition().subscribe(position => {
+            uns2 = getRoamingPosition().subscribe(position => {
                 roamingPosition(position.coords.latitude, position.coords.longitude);
             });
         }
@@ -62,7 +87,7 @@ const MapComponent: React.FC = () => {
 
     const clientsPositions = (): void => {
 
-        getCoordinateEvent().subscribe(c => {
+        uns3 = getCoordinateEvent().subscribe(c => {
             if (c) {
                 if (c.newUser) {
                     assignColorToClient();
@@ -70,7 +95,9 @@ const MapComponent: React.FC = () => {
                 let co: Coordinate = Coordinate.coordinateBuilder(c.lat, c.ln, c.time,
                     c.user, c.group);
                 addCoordinates(co);
-                setCoords(coords => [...coords, co]);
+                //setCoords(coords => [...coords, co]);
+                coords.push(co);
+                setCoords(coords);
                 centerMap();
             }
         });
@@ -78,7 +105,7 @@ const MapComponent: React.FC = () => {
     }
 
     const assignColorToLocalClient = (): void => {
-        clientColor.set(user.name, 'red');
+        clientColor.set(user, 'red');
         setClientColor(clientColor);
     }
 
@@ -114,11 +141,13 @@ const MapComponent: React.FC = () => {
     const mockPosition = (lat?: number, ln?: number, _gap?: number): void => {
         let gap: number = getGap(0.005, 0.0005);
         let c: Coordinate = getRandomCoords(lat, ln, 0.005, 0.0005); // c.lat, c.ln
-        getCoordsMockEvent(c.lat, c.ln, gap).subscribe(position => {
+        uns4 = getCoordsMockEvent(c.lat, c.ln, gap).subscribe(position => {
             let co: Coordinate = Coordinate.coordinateBuilder(position.lat, position.ln, new Date(),
-                user.name, user.room);
+                user, 'room1');
             addCoordinates(co);
-            setCoords([...coords, co]);
+            //setCoords([...coords, co]);
+            coords.push(co);
+            setCoords(coords);
             centerMap();
             co.save = save;
             sendCoordinate(co);
@@ -127,9 +156,11 @@ const MapComponent: React.FC = () => {
 
     const roamingPosition = (lat: number, ln: number): void => {
         let co: Coordinate = Coordinate.coordinateBuilder(lat, ln, new Date(),
-            user.name, user.room);
+            user, 'room1');
         addCoordinates(co);
-        setCoords([...coords, co]);
+        //setCoords([...coords, co]);
+        coords.push(co);
+        setCoords(coords);
         centerMap();
         co.save = save;
         sendCoordinate(co);
@@ -145,11 +176,14 @@ const MapComponent: React.FC = () => {
     }
 
     const toggleCenter = () => {
-        setEnableCenter(!enableCenter);
+        const centered = !enableCenter;
+        setEnableCenter(centered);
     }
 
     const enableSave = () => {
-        setSave(!save);
+        const grab = !save;
+        setSave(grab);
+        console.log('save:' + save);
     }
 
     const clearMarks = () => {
@@ -158,7 +192,7 @@ const MapComponent: React.FC = () => {
 
     const _checkPermissions = (): void => {
 
-        checkPermissions().subscribe(status => {
+        uns5 = checkPermissions().subscribe(status => {
             console.log(status);
             if (status !== 'web' && (status.location !== 'granted' || status.coarseLocation !== 'granted')) {
 
@@ -167,15 +201,19 @@ const MapComponent: React.FC = () => {
 
     }
 
+    const ChangeCenter = ({ center }) => {
+        const map = useMap();
+        map.setView(center);
+        return null;
+    }
+
 
     const RoamingMarkers = () => {
 
         if (coords && coords.length > 0) {
-
             return (
                 coords.map((c, index) => {
-                    return <Marker icon={theIcon(c.user)} position={{ lat: c.lat, lng: c.ln }} key={index}
-                    />
+                    return <Marker icon={theIcon(c.user)} position={{ lat: c.lat, lng: c.ln }} key={index} />
                 }));
 
         }
@@ -190,8 +228,9 @@ const MapComponent: React.FC = () => {
                     style={{
                         height: "550px", width: "100%", backgroundColor: "white", marginTop: "10px", marginBottom: '10px'
                     }}
-
                 >
+                    {enableCenter ? <ChangeCenter center={center} /> : ''}
+
                     <TileLayer
                         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -204,10 +243,10 @@ const MapComponent: React.FC = () => {
             }
 
             <IonFab slot="fixed" vertical="top" horizontal="start">
-                <IonToggle checked={true} onClick={() => toggleCenter()}>Auto Center</IonToggle>
+                <IonToggle checked={enableCenter} onClick={() => toggleCenter()}>Auto Center</IonToggle>
             </IonFab >
             <IonFab slot="fixed" vertical="top" horizontal="center">
-                <IonToggle color="warning" checked={false} onClick={() => enableSave()}>Enable saving</IonToggle>
+                <IonToggle color="warning" checked={save} onClick={() => enableSave()}>Enable saving</IonToggle>
             </IonFab >
             <IonFab slot="fixed" vertical="bottom" horizontal="end">
                 <IonFabButton onClick={() => clearMarks()}>

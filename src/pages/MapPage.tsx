@@ -3,7 +3,11 @@ import { IonButtons, IonContent, IonHeader, IonMenuButton, IonPage, IonTitle, Io
 import './MapPage.css';
 import MapComponent from '../components/MapComponent';
 
-const MapPage: React.FC = () => {
+interface ContainerProps {
+    user: string
+}
+
+const MapPage: React.FC<ContainerProps> = ({ user }) => {
 
     return (
         <IonPage>
@@ -22,7 +26,7 @@ const MapPage: React.FC = () => {
                         <IonTitle size="large">Map</IonTitle>
                     </IonToolbar>
                 </IonHeader>
-                <MapComponent />
+                <MapComponent user={user} />
             </IonContent>
         </IonPage>
     );

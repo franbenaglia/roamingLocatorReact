@@ -10,6 +10,7 @@ const Page: React.FC = () => {
 
   const { name } = useParams<{ name: string; }>();
 
+  /*
   const { setUser } = useContext<AppContextI>(AppContext);
 
   const [cookies] = useCookies(['token', 'username']);
@@ -21,6 +22,7 @@ const Page: React.FC = () => {
     }
 
   }, []);
+  */
 
   return (
     <IonPage>

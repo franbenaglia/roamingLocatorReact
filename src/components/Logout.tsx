@@ -2,10 +2,9 @@ import { IonButton } from '@ionic/react';
 import './Logout.css';
 import { useContext } from 'react';
 import { AppContext } from '../context/AppContext';
+import { logout } from '../helpers/AuthHelper';
 
 const Logout: React.FC = () => {
-
-    const { logout } = useContext(AppContext);
 
     const _logout = () => {
         logout();

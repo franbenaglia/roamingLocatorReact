@@ -10,17 +10,19 @@ const availableColors: string[] = ['red', 'white', 'blue', 'green', 'yellow', 'p
 const CoordinateList: React.FC = () => {
 
     const [coordinates, setCoordinates] = useState<Coordinate[]>([]);
-    const [idClients, setIdClients] = useState<Set<string>>();
-    const [iconColorCount, setIconColorCount] = useState<Map<string, number>>();
-    const [clientColor, setClientColor] = useState<Map<string, string>>();
+    const [idClients, setIdClients] = useState<Set<string>>(new Set<string>());
+    const [iconColorCount, setIconColorCount] = useState<Map<string, number>>(new Map<string, number>());
+    const [clientColor, setClientColor] = useState<Map<string, string>>(new Map<string, string>());
     const [user, setUser] = useState('');
 
     const fetchAllCoordinates = async () => {
         const cs = await getAll();
-        coordinates.push(...cs);
+        coordinates.push(...cs.data);
         setCoordinates(coordinates);
-        setIdClients(new Set(coordinates.map(cs => cs.user)));
-        initializeCss();
+        const y = coordinates.map(cs => cs.user ? cs.user : 'anonimo')
+        const x = new Set(y);
+        setIdClients(x);
+        initializeCss(x);
 
     }
 
@@ -28,10 +30,10 @@ const CoordinateList: React.FC = () => {
         fetchAllCoordinates();
     }, []);
 
-    const initializeCss = (): void => {
+    const initializeCss = (idc: Set<string>): void => {
 
         initializeIconColor();
-        assignColorToClient();
+        assignColorToClient(idc);
 
     }
 
@@ -42,11 +44,12 @@ const CoordinateList: React.FC = () => {
         setIconColorCount(iconColorCount);
     }
 
-    const assignColorToClient = (): void => {
-        for (let c of idClients) {
+    const assignColorToClient = (idc: Set<string>): void => {
+        for (let c of idc) {
             if (!clientColor.has(c)) {
                 let luc = lessUsedColor();
                 clientColor.set(c, luc);
+                setClientColor(clientColor);
                 iconColorCount.set(luc, iconColorCount.get(luc) + 1);
                 setIconColorCount(iconColorCount)
             }
@@ -69,10 +72,7 @@ const CoordinateList: React.FC = () => {
 
     const refresh = async () => {
         setCoordinates([]);
-        const allCoord = await getAll();
-        coordinates.push(...allCoord);
-        setCoordinates(coordinates);
-        initializeCss();
+        fetchAllCoordinates();
     }
 
     const _deleteAll = async () => {
@@ -80,22 +80,27 @@ const CoordinateList: React.FC = () => {
         setCoordinates([]);
     }
 
-    const _getByUser = async () => {
-        setCoordinates([]);
+    const _getByUser = async (e: any) => {
         const coords = await getByUser(user);
-        coordinates.push(...coords)
-        setCoordinates(coordinates);
-        initializeCss();
+        //coordinates.push(...coords.data)
+        setCoordinates(prev => {
+            prev.length = 0;
+            prev.push(...coords.data);
+            return prev;
+        });
     }
 
     const onChangeHandler = event => {
         setUser(event.target.value);
     }
 
-    const getCssClient = (user: string): any => {
+    const getCssClient = (user: string): string => {
+        let color = 'red';
+        if (clientColor.has(user)) {
+            color = clientColor.get(user);
+        }
+        return color;
 
-        let color = clientColor.get(user);
-        return '{color:' + color + '}';
     }
 
     return (
@@ -107,8 +112,8 @@ const CoordinateList: React.FC = () => {
                     <IonButton onClick={() => _deleteAll()}>Delete All</IonButton>
                 </IonRow>
                 <IonRow>
-                    <IonInput onKeyUp={(event) => onChangeHandler(event)} value={user} placeholder="Enter user"></IonInput>
-                    <IonButton onClick={() => _getByUser()} > By user</IonButton >
+                    <IonInput onInput={(event) => onChangeHandler(event)} value={user} placeholder="Enter user"></IonInput>
+                    <IonButton onClick={(e) => _getByUser(e)} > By user</IonButton >
                 </IonRow>
                 <IonRow>
                     <IonCol>n</IonCol>
@@ -120,13 +125,15 @@ const CoordinateList: React.FC = () => {
                 </IonRow>
 
                 {coordinates && coordinates.map((c, i) => {
+                    let z = getCssClient(c.user);
+                    console.log(z);
                     return (
-                        <IonRow>
+                        <IonRow key={i}>
                             <IonCol style={{ color: 'red' }}>{i}</IonCol>
                             <IonCol style={{ color: 'green' }}>{c.lat}</IonCol>
                             <IonCol style={{ color: 'yellow' }}>{c.ln}</IonCol>
-                            <IonCol style={{ color: 'white' }}>{c.time.toISOString()}</IonCol>
-                            <IonCol style={getCssClient(c.user)}>{c.user}</IonCol>
+                            <IonCol style={{ color: 'white' }}>{c.time ? c.time.toISOString() : ''}</IonCol>
+                            <IonCol style={{ color: z }}>{c.user}</IonCol>
                             <IonCol style={{ color: 'pink' }}>{c.group}</IonCol>
                         </IonRow >
                     )

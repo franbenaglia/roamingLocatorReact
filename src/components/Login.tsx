@@ -5,12 +5,6 @@ import { IonButton, IonIcon, IonItem, IonLabel, IonList, IonListHeader, IonToast
 
 const Login: React.FC = () => {
 
-    const [showMessage, setShowMessage] = useState(false);
-
-    const setOpen = (value: boolean) => {
-        setShowMessage(value);
-    }
-
     const googleOauth2 = () => {
         googleOauth2Login();
     }
@@ -19,12 +13,8 @@ const Login: React.FC = () => {
         githubOauth2Login();
     }
 
-
     return (
-        <div >
-            <IonToast position="top" positionAnchor="header" isOpen={showMessage} message="Login fail."
-                onDidDismiss={() => setOpen(false)} duration={4000}>
-            </IonToast>
+        <div>
             <IonList lines="inset">
                 <IonListHeader>
                     <IonLabel>Complete:</IonLabel>
